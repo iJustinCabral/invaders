@@ -4,26 +4,28 @@ import "core:fmt"
 import "core:math"
 import rl "vendor:raylib"
 
+
 // Constants
 WINDOW_WIDTH     :: 480 * 2 
 WINDOW_HEIGHT    :: 360 * 2
+TILE_WIDTH       :: 16
+TILE_HEIGHT      :: 16
+TILE_DATA        :: #load("tileset.png")
 
 // Type Alias
-Vec2 :: rl.Vector2 
-
-Entity :: struct {
-    pos: Vec2,
-    vel: Vec2,
-}
+Vec2      :: rl.Vector2
+Rectangle :: rl.Rectangle
 
 Player :: struct {
-    using entity: Entity,
-    texture: rl.Texture
+    rec: Rectangle,
+    pos: Vec2,
+    vel: Vec2,
+    speed: int,
+    is_dead: bool,
 }
 
 Invader :: struct {
-    using entity: Entity,
-    texture: rl.Texture
+    rec: rl.Rectangle
 }
 
 Game_Memory :: struct {
@@ -31,10 +33,12 @@ Game_Memory :: struct {
     invaders: [dynamic]Invader,
     score: int,
     lives: int,
+    tileset: rl.Texture2D
 }
 
 gm := Game_Memory{}
 invaders: [dynamic]Invader = {}
+tileset: rl.Texture2D 
 
 main :: proc() {
     rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Invaders")
@@ -42,29 +46,76 @@ main :: proc() {
 
     rl.SetTargetFPS(60)
 
-    tileset: rl.Texture2D = rl.LoadTexture("tileset.png")
-
-    frameWidth := tileset.width / 16
-    frameHeight := tileset.height / 8
-    sourceRec : rl.Rectangle = {128, 128, f32(frameWidth), f32(frameHeight)}
-    destRec : rl.Rectangle = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, f32(frameWidth) * 2, f32(frameHeight) * 2}
-    origin := Vec2{f32(frameWidth), f32(frameHeight)}
-    rotation := 180
+    init_memory()
 
     for !rl.WindowShouldClose() {
+
 	// Input
+	if !gm.player.is_dead {
+	    if rl.IsKeyDown(.A) do gm.player.pos.x -= 10
+	    if rl.IsKeyDown(.D) do gm.player.pos.x += 10
+	}
 
 	// Simulate
+	if gm.player.pos.x < 0 {
+	    gm.player.pos.x = 2
+	}
+	if gm.player.pos.x > WINDOW_WIDTH - TILE_WIDTH {
+	    gm.player.pos.x = WINDOW_WIDTH - TILE_WIDTH
+	}
 
 	// Render
-	rl.BeginDrawing()
-	defer rl.EndDrawing()
-
-	rl.DrawTexturePro(tileset, sourceRec, destRec, origin, f32(rotation), rl.WHITE )
-
-	rl.ClearBackground(rl.BLACK)
+	draw()
     }
 
-    defer rl.UnloadTexture(tileset)
-
 }
+
+init_memory :: proc() {
+
+    // Load the tileset
+    tileset_image := rl.LoadImageFromMemory(".png", raw_data(TILE_DATA), i32(len(TILE_DATA))) 
+    gm.tileset = rl.LoadTextureFromImage(tileset_image)
+    rl.UnloadImage(tileset_image)
+
+    //Init the player
+    gm.player = Player{ pos = { WINDOW_WIDTH / 2 - 8, WINDOW_HEIGHT * 0.95}}
+}
+
+draw_player :: proc() {
+    tileset := gm.tileset
+    frame_width := tileset.width / 16
+    frame_height := tileset.height / 8
+    source : rl.Rectangle = {128, 128, f32(frame_width), -f32(frame_height)}
+    dest : rl.Rectangle = {gm.player.pos.x, gm.player.pos.y, f32(frame_width) * 2, f32(frame_height) * 2}
+    origin := Vec2{f32(frame_width) / 2, f32(frame_height) / 2}
+    rotation := 0
+
+    rl.DrawTexturePro(tileset, source, dest, origin, f32(rotation), rl.WHITE )
+}
+
+draw_background :: proc() {
+    tileset := gm.tileset
+    frame_width := tileset.width / 2
+    frame_height := tileset.height
+
+    for y := f32(0); y < f32(WINDOW_HEIGHT); y += f32(frame_height) {
+	for x:= f32(0); x < f32(WINDOW_WIDTH); x += f32(frame_width){
+	    source : rl.Rectangle = {0, 0, f32(frame_width), f32(frame_height)}
+	    dest : rl.Rectangle = {f32(x), f32(y), f32(frame_width), f32(frame_height) * 2}
+	    origin := Vec2{f32(frame_width) / 2, f32(frame_height) / 2}
+	    rotation := 0
+
+	    rl.DrawTexturePro(tileset, source, dest, origin, f32(rotation), rl.WHITE )
+	}
+    }
+}
+
+draw :: proc() {
+    rl.BeginDrawing()
+    defer rl.EndDrawing()
+
+    draw_background()
+    draw_player()
+    
+} 
+
