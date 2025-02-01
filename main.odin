@@ -17,16 +17,20 @@ Entity :: struct {
 }
 
 Player :: struct {
-    using entity: Entity
+    using entity: Entity,
+    texture: rl.Texture
 }
 
 Invader :: struct {
-    using entity: Entity
+    using entity: Entity,
+    texture: rl.Texture
 }
 
 Game_Memory :: struct {
     player: Player,
-    invaders: [dynamic]Invader
+    invaders: [dynamic]Invader,
+    score: int,
+    lives: int,
 }
 
 gm := Game_Memory{}

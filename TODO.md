@@ -13,3 +13,7 @@ Add player lives HUD element
 Create a start menu  
 Add an enemy to the screen  
 Detect bullet hit collision with enemy  
+
+### 02/01/2025 =-
+
+
