@@ -126,7 +126,8 @@ init_memory :: proc() {
 	    }
 	    append(&gm.invaders, Invader {
 		pos = position,
-		is_dead = false
+		is_dead = false,
+		rec = {position.x, position.y, 32, 32} // check this after
 	    })
 	}
     }
@@ -142,11 +143,9 @@ update_invaders :: proc() {
 	    invader.pos.x += move_direction * 2
 	    
 	    if invader.pos.x > WINDOW_WIDTH - 16 || invader.pos.x < 0 {
-		move_direction = -move_direction
+		move_direction *= -1
 		steps += 1
-		invader.pos.y += 20
 	    }
-	    break
 	}
     }
 }
@@ -170,6 +169,7 @@ update_projectiles :: proc(gm: ^Game_Memory) {
 	    if !p.did_remove && rl.CheckCollisionRecs(p.rec, invader.rec){
 		p.did_remove = true
 		invader.is_dead = true
+		remove(&gm.invaders, invader)
 		break
 	    }
 	}

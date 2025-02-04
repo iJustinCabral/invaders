@@ -42,7 +42,7 @@ detect bullet hit collision with enemy
 ### -= 02/03/2025 =-
 
 *Add enemy to the screen  
-
+*Make a grid of enemies  
 
 create a start menu menu  
 create game scene  
