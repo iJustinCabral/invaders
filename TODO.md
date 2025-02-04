@@ -31,13 +31,30 @@ detect bullet hit collision with enemy
 
 ### -= 02/02/2025 =-
 
-*Plyaer can shoot bullets  
+*Player can shoot bullets  
 
-
-player can shoot bullets  
 create a start menu menu  
-create game scene
+create game scene  
 add an enemy to the screen  
 detect bullet hit collision with enemy  
+
+
+### -= 02/03/2025 =-
+
+*Add enemy to the screen  
+
+
+create a start menu menu  
+create game scene  
+make a grid of enemies  
+make enemies move in sync  
+increase enemy movement speed  
+make enemies shoot bullets  
+detect bullet hit collision with enemy  
+impelemnt powerup to shoot faster/multiple bullets  
+Add game music?  
+Add shoot sound FX  
+Add death sound FX  
+Add invader death sound FX  
 
 

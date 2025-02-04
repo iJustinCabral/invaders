@@ -25,7 +25,10 @@ Player :: struct {
 }
 
 Invader :: struct {
-    rec: rl.Rectangle
+    rec: rl.Rectangle,
+    pos: Vec2,
+    vel: Vec2,
+    is_dead: bool,
 }
 
 Projectile :: struct {
@@ -86,6 +89,7 @@ main :: proc() {
 	}
 
 	update_projectiles(&gm)
+	update_invaders()
 
 	// Render
 	draw()
@@ -107,6 +111,44 @@ init_memory :: proc() {
     }
     gm.lives = 3
     gm.score = 0
+
+    // Init invaders
+    invader_spacing_x := 50
+    invader_spacing_y := 50
+    rows := 5
+    cols := 10
+
+    for y in 0..<rows {
+	for x in 0..<cols {
+	    position := Vec2{
+		f32(x * invader_spacing_x + 100),
+		f32(y * invader_spacing_y + 50),
+	    }
+	    append(&gm.invaders, Invader {
+		pos = position,
+		is_dead = false
+	    })
+	}
+    }
+}
+
+update_invaders :: proc() {
+    move_direction: f32 = 1 // right = 1, left = -1
+    steps := 0
+    max_steps := 10
+
+    for &invader in gm.invaders {
+	if !invader.is_dead {
+	    invader.pos.x += move_direction * 2
+	    
+	    if invader.pos.x > WINDOW_WIDTH - 16 || invader.pos.x < 0 {
+		move_direction = -move_direction
+		steps += 1
+		invader.pos.y += 20
+	    }
+	    break
+	}
+    }
 }
 
 update_projectiles :: proc(gm: ^Game_Memory) {
@@ -127,6 +169,7 @@ update_projectiles :: proc(gm: ^Game_Memory) {
 	for &invader, idx in gm.invaders { 
 	    if !p.did_remove && rl.CheckCollisionRecs(p.rec, invader.rec){
 		p.did_remove = true
+		invader.is_dead = true
 		break
 	    }
 	}
@@ -166,11 +209,27 @@ draw_background :: proc() {
     }
 }
 
+draw_invaders :: proc() {
+    tileset := gm.tileset
+    frame_width := tileset.width / 16
+    frame_height := tileset.height / 8
+    source := rl.Rectangle{176,224, f32(frame_width), f32(frame_height)}
+
+    // This will eventually be a loop over all !is_dead invaders
+    for &invader in gm.invaders {
+	dest : rl.Rectangle = {invader.pos.x, invader.pos.y, f32(frame_width) * 2, f32(frame_height) * 2}
+	origin := Vec2{f32(frame_width) / 2, f32(frame_height) / 2}
+	rotation := 0
+
+	rl.DrawTexturePro(tileset, source, dest, origin, f32(rotation), rl.WHITE )
+    }
+}
+
 draw_bullet :: proc() {
     tileset := gm.tileset
     frame_width := tileset.width / 16
     frame_height := tileset.height / 8
-    source := rl.Rectangle{176, 128, f32(frame_width), -f32(frame_height)}
+    source := rl.Rectangle{176, 144, f32(frame_width), -f32(frame_height)}
     for p in gm.projectiles {
 	dest := Rectangle{p.pos.x, p.pos.y, f32(frame_width), f32(frame_height)}
 	rl.DrawTexturePro(tileset, source, dest, {0,0}, 0, rl.WHITE)
@@ -215,7 +274,6 @@ draw_lives :: proc() {
 
 	rl.DrawTexturePro(tileset, source, dest, origin, f32(rotation), rl.WHITE )
     }
-
 }
 
 draw :: proc() {
@@ -224,6 +282,7 @@ draw :: proc() {
 
     draw_background()
     draw_player()
+    draw_invaders()
     draw_score()
     draw_lives()
     draw_bullet()
