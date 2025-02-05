@@ -17,7 +17,6 @@ Vec2      :: rl.Vector2
 Rectangle :: rl.Rectangle
 
 Player :: struct {
-    rec: Rectangle,
     pos: Vec2,
     vel: Vec2,
     speed: int,
@@ -25,7 +24,6 @@ Player :: struct {
 }
 
 Invader :: struct {
-    rec: rl.Rectangle,
     pos: Vec2,
     vel: Vec2,
     is_dead: bool,
@@ -34,7 +32,6 @@ Invader :: struct {
 Projectile :: struct {
     pos: Vec2,
     vel: Vec2,
-    rec: Rectangle,
     ttl: f64,
     spawn_t: f64,
     did_remove: bool
@@ -60,6 +57,7 @@ main :: proc() {
     rl.SetTargetFPS(60)
 
     init_memory()
+    defer free_all(context.temp_allocator)
 
     for !rl.WindowShouldClose() {
 
@@ -107,7 +105,6 @@ init_memory :: proc() {
     //Init the player
     gm.player = Player{
 	pos = { WINDOW_WIDTH / 2 - 8, WINDOW_HEIGHT * 0.95},
-	rec = { 0, 0, 32, 32}
     }
     gm.lives = 3
     gm.score = 0
@@ -127,7 +124,6 @@ init_memory :: proc() {
 	    append(&gm.invaders, Invader {
 		pos = position,
 		is_dead = false,
-		rec = {position.x, position.y, 32, 32} // check this after
 	    })
 	}
     }
@@ -140,14 +136,23 @@ update_invaders :: proc() {
 
     for &invader in gm.invaders {
 	if !invader.is_dead {
-	    invader.pos.x += move_direction * 2
-	    
-	    if invader.pos.x > WINDOW_WIDTH - 16 || invader.pos.x < 0 {
+	    if invader.pos.x + 32 > WINDOW_WIDTH - 25 {
 		move_direction *= -1
-		steps += 1
+		continue;
 	    }
-	}
+
+	    if invader.pos.x < 25 {
+		move_direction *= 1
+		continue;
+	    }
+	} 
     }
+
+    for &invader in gm.invaders {
+	invader.pos.x += move_direction * 3
+    }
+
+    //TODO: Add random bullets
 }
 
 update_projectiles :: proc(gm: ^Game_Memory) {
@@ -166,10 +171,11 @@ update_projectiles :: proc(gm: ^Game_Memory) {
 
 	// Check collision here 
 	for &invader, idx in gm.invaders { 
-	    if !p.did_remove && rl.CheckCollisionRecs(p.rec, invader.rec){
+	    if !p.did_remove && check_bullet_hit_invader(p, &invader) { 
 		p.did_remove = true
 		invader.is_dead = true
-		remove(&gm.invaders, invader)
+		gm.score += 100
+		unordered_remove(&gm.invaders, idx)
 		break
 	    }
 	}
@@ -178,6 +184,13 @@ update_projectiles :: proc(gm: ^Game_Memory) {
     for i in 0..<len(to_remove) {
 	ordered_remove(&gm.projectiles, to_remove[len(to_remove) - i - 1])
     }
+}
+
+check_bullet_hit_invader :: proc(p: ^Projectile, i: ^Invader) -> bool {
+    p_rec := Rectangle{p.pos.x, p.pos.y, 16, 16}
+    i_rec := Rectangle{i.pos.x, i.pos.y, 32, 32}
+
+    return rl.CheckCollisionRecs(p_rec, i_rec)
 }
 
 draw_player :: proc() {
@@ -232,7 +245,9 @@ draw_bullet :: proc() {
     source := rl.Rectangle{176, 144, f32(frame_width), -f32(frame_height)}
     for p in gm.projectiles {
 	dest := Rectangle{p.pos.x, p.pos.y, f32(frame_width), f32(frame_height)}
-	rl.DrawTexturePro(tileset, source, dest, {0,0}, 0, rl.WHITE)
+	if !p.did_remove {
+	    rl.DrawTexturePro(tileset, source, dest, {0,0}, 0, rl.WHITE)
+	}
     }
 }
 

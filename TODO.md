@@ -46,7 +46,6 @@ detect bullet hit collision with enemy
 
 create a start menu menu  
 create game scene  
-make a grid of enemies  
 make enemies move in sync  
 increase enemy movement speed  
 make enemies shoot bullets  
@@ -57,4 +56,19 @@ Add shoot sound FX
 Add death sound FX  
 Add invader death sound FX  
 
+### -= 02/04/2025 =-
 
+*Detect bullet hits on invaders  
+*Make invader move in sync  
+
+create a start menu menu  
+create game scene  
+make a grid of enemies  
+make enemies move in sync  
+increase enemy movement speed  
+make enemies shoot bullets  
+detect bullet hit collision with enemy  
+impelemnt powerup to shoot faster/multiple bullets  
+
+
+#### DID NOT COMPLETE ####
